@@ -32,9 +32,6 @@ public class CouponIssueService {
     }
 
     public void publishWithLock(Long userId, Long templateId) {
-        if (applicationLock.isLocked(userId)) {
-            throw new IllegalArgumentException("접근할 수 없는 상태입니다");
-        }
         applicationLock.lock(userId);
 
         Long limitByUser = findLimitByUser(templateId);
@@ -61,7 +58,7 @@ public class CouponIssueService {
         }
 
         Coupon coupon = new Coupon("쿠폰", templateId, userId);
-        couponRepository.save(coupon);
+        couponRepository.save(coupon); // TODO 실패했을 때
     }
 
     private Long findLimitByUser(Long templateId) {

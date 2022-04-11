@@ -2,10 +2,6 @@ package me.hongbin.coupon.infra;
 
 import static java.time.Duration.*;
 
-import java.time.Duration;
-
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
@@ -22,17 +18,14 @@ public class RedisApplicationLock implements ApplicationLock {
     }
 
     @Override
-    public boolean isLocked(Long userId) {
-        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
-        String isLocked = valueOperations.get(key(userId));
-
-        return Boolean.getBoolean(isLocked);
-    }
-
-    @Override
     public void lock(Long userId) {
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
-        valueOperations.set(key(userId), "true");
+        Long count = valueOperations.increment(key(userId));
+
+        if (count > 2) {
+            throw new IllegalStateException("동시에 접근했습니다");
+        }
+
         redisTemplate.expire(key(userId), ofMillis(10000));
     }
 
